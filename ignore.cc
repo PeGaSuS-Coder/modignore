@@ -11,7 +11,9 @@ enum {
 	ModeNotice,
 	ModePrivNotice,
 	ModeCTCP,
-	ModePrivCTCP
+	ModePrivCTCP,
+	ModeJoin,
+	ModePart
 };
 
 class MatcherError : public runtime_error {
@@ -389,6 +391,19 @@ CModule::EModRet ModIgnore::check(CNick& nick, CString& message, int mode) {
 		if (ignore->m->Match(nick, message, mode)) {
 			return HALT;
 		}
+	}
+	return CONTINUE;
+}
+
+CModule::EModRet ModIgnore::OnRawMessage(CMessage &message) {
+	CString msgtext;
+	if(message.GetType() == CMessage::Type::Join) {
+		msgtext = message.ToString(message.IncludeAll);
+		return check(message.GetNick(), msgtext, ModeJoin);
+	}
+	if(message.GetType() == CMessage::Type::Part) {
+		msgtext = message.ToString(message.IncludeAll);
+		return check(message.GetNick(), msgtext, ModePart);
 	}
 	return CONTINUE;
 }
